@@ -43,7 +43,7 @@
 5. **BFF 로직 공용화**: Server Action마다 반복되는 세션 체크, 스키마 검증, 에러 캐치 로직은 단일 **유틸리티/래퍼 함수(actionClient 등)**를 통해 공용화한다.
 
 ### 3.3 예외/로깅/트랜잭션
-1. **Service 예외 던지기**: Service 계층(`packages/core`)에서 HTTP 예외 객체를 직접 만들지 않는다. 비즈니스 예외는 단순 문자열을 포함한 Error로 던진다. (예: `throw new Error("ALREADY_PASSED")`)
+1. **Service 예외 던지기**: Service 계층(`packages/core`)에서 HTTP 예외 객체를 직접 만들지 않는다. 비즈니스 예외는 단순 문자열을 포함한 Error로 던진다. (예: `throw new Error(ERROR_CODE.ALREADY_PASSED)`)
 2. **에러 메시지 공용화**: Application 계층(Server Action)은 Service 계층에서 던진 에러를 잡아, **공통 에러 딕셔너리(Map)**를 거쳐 클라이언트 유저가 이해할 수 있는 친절한 한글 메시지로 매핑하여 응답한다.
 3. **트랜잭션**: 트랜잭션 경계는 비즈니스 로직(Service 레이어)에서 관리한다.
 4. **로그 정책**: 로그는 구조화하고 민감정보(토큰, 비밀번호, 개인정보)는 절대 남기지 않는다.
