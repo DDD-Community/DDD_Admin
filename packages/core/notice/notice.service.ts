@@ -1,9 +1,10 @@
 import { getNoticeById, updateNotice } from "@ddd/db";
+import { ERRORS, AppError } from "../errors";
 
 export async function publishNotice(noticeId: string) {
   const n = await getNoticeById(noticeId);
-  if (!n) throw new Error("NOTICE_NOT_FOUND");
-  if (n.isPublished) throw new Error("ALREADY_PUBLISHED");
+  if (!n) throw new AppError(ERRORS.NOTICE_NOT_FOUND);
+  if (n.isPublished) throw new AppError(ERRORS.ALREADY_PUBLISHED);
 
   const updated = await updateNotice(noticeId, {
     isPublished: true,

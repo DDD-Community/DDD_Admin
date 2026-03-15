@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "exports": {
-    ".": "./index.ts"
+    ".": "./index.ts",
+    "./*": "./*/index.ts",
+    "./errors": "./errors.ts"
   },
   "dependencies": {
     "@ddd/db": "workspace:*",

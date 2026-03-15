@@ -40,3 +40,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 **/next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+
+# omc
+.omc/
+
+# agent
+.agent/
+.agents/
+.claude/
