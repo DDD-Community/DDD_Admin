@@ -4,6 +4,7 @@ import {
   updateInterview,
   updateApplicationStatus,
 } from "@ddd/db";
+import { ERRORS, AppError } from "../errors";
 
 export async function scheduleInterview(
   applicationId: string,
@@ -11,7 +12,7 @@ export async function scheduleInterview(
   interviewedBy?: string
 ) {
   const existing = await getInterviewByApplicationId(applicationId);
-  if (existing) throw new Error("INTERVIEW_ALREADY_EXISTS");
+  if (existing) throw new AppError(ERRORS.INTERVIEW_ALREADY_EXISTS);
 
   return createInterview({
     applicationId,
@@ -27,7 +28,7 @@ export async function recordResult(
   result: "PASS" | "FAIL"
 ) {
   const updated = await updateInterview(interviewId, { score, memo, result });
-  if (!updated) throw new Error("INTERVIEW_NOT_FOUND");
+  if (!updated) throw new AppError(ERRORS.INTERVIEW_NOT_FOUND);
 
   // Interview 결과를 Application status에 반영
   const status = result === "PASS" ? "PASSED" : "FAILED";

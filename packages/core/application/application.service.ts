@@ -3,13 +3,13 @@ import {
   updateApplicationStatus,
   createMember,
 } from "@ddd/db";
-import { ERROR_CODE } from "../errors";
+import { ERRORS, AppError } from "../errors";
 
 export async function passApplication(applicationId: string) {
   const application = await getApplicationById(applicationId);
-  if (!application) throw new Error(ERROR_CODE.APPLICATION_NOT_FOUND);
-  if (application.status === "PASSED") throw new Error(ERROR_CODE.ALREADY_PASSED);
-  if (application.status === "FAILED") throw new Error(ERROR_CODE.ALREADY_FAILED);
+  if (!application) throw new AppError(ERRORS.APPLICATION_NOT_FOUND);
+  if (application.status === "PASSED") throw new AppError(ERRORS.ALREADY_PASSED);
+  if (application.status === "FAILED") throw new AppError(ERRORS.ALREADY_FAILED);
 
   await updateApplicationStatus(applicationId, "PASSED");
   await createMember({
@@ -23,17 +23,17 @@ export async function passApplication(applicationId: string) {
 
 export async function failApplication(applicationId: string) {
   const application = await getApplicationById(applicationId);
-  if (!application) throw new Error(ERROR_CODE.APPLICATION_NOT_FOUND);
-  if (application.status === "PASSED") throw new Error(ERROR_CODE.ALREADY_PASSED);
-  if (application.status === "FAILED") throw new Error(ERROR_CODE.ALREADY_FAILED);
+  if (!application) throw new AppError(ERRORS.APPLICATION_NOT_FOUND);
+  if (application.status === "PASSED") throw new AppError(ERRORS.ALREADY_PASSED);
+  if (application.status === "FAILED") throw new AppError(ERRORS.ALREADY_FAILED);
 
   await updateApplicationStatus(applicationId, "FAILED");
 }
 
 export async function moveToInterview(applicationId: string) {
   const application = await getApplicationById(applicationId);
-  if (!application) throw new Error(ERROR_CODE.APPLICATION_NOT_FOUND);
-  if (application.status !== "RECEIVED") throw new Error(ERROR_CODE.INVALID_STATUS_TRANSITION);
+  if (!application) throw new AppError(ERRORS.APPLICATION_NOT_FOUND);
+  if (application.status !== "RECEIVED") throw new AppError(ERRORS.INVALID_STATUS_TRANSITION);
 
   await updateApplicationStatus(applicationId, "INTERVIEW");
 }
