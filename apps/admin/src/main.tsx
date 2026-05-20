@@ -6,7 +6,6 @@ import { Toast } from "@heroui/react"
 import "./index.css"
 import Router from "./pages/index.tsx"
 import { QueryProvider } from "@/app/providers/QueryProvider.tsx"
-import { ThemeProvider } from "@/app/providers/ThemeProvider.tsx"
 import { paths } from "@/shared/lib/paths"
 
 const apiUrl = import.meta.env.VITE_API_URL ?? ""
@@ -27,10 +26,8 @@ enableMocking().then(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryProvider>
-        <ThemeProvider>
-          <Router />
-          <Toast.Provider placement="top end" />
-        </ThemeProvider>
+        <Router />
+        <Toast.Provider placement="top end" />
       </QueryProvider>
     </StrictMode>
   )

@@ -23,17 +23,17 @@
 
 ## 한눈에 보기
 
-| 영역 | 상태 | 핵심 갭 |
-| --- | --- | --- |
-| 공통 인프라 (admin) | ✅ | 모든 도메인이 openapi-fetch 기반 `api` 싱글톤으로 통일 (commit 241ae4e). storage 보조 queries(`listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile`) 는 후속 |
-| 3.1 기수 관리 | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시 |
-| 3.2 사전 알림 | 🔧 | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음) |
-| 3.3 지원자 관리 | ✅ | 목록·필터·Drawer 상세·합격불합격 분기·면접일자 컬럼(슬롯 예약 join) 완료. 개인정보 동의 일자 표시 |
-| 3.3.5 면접 슬롯 | ✅ | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 |
-| 3.4 프로젝트 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속 |
-| 3.5 블로그 DB | ✅ | 코드 완료 (브라우저 회귀 테스트 미실시) |
-| 3.6 FAQ | ✅ | MVP 제외 결정 (FE 하드코딩) |
-| 5. 데이터 모델 타입 반영 | 🔧 | `@ddd/api` 생성 타입 도입 진행 중 — `pages/semesters/types.d.ts` 임시 타입 잔존 |
+| 영역                     | 상태 | 핵심 갭                                                                                                                                                                                                                             |
+| ------------------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 공통 인프라 (admin)      | ✅   | 모든 도메인이 openapi-fetch 기반 `api` 싱글톤으로 통일 (commit 241ae4e). storage 보조 queries(`listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile`) 는 후속                                                                    |
+| 3.1 기수 관리            | ✅   | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패(`PartsSaveAfterCreateError`) 시 edit 모드 자동 전환 — 브라우저 검증 미실시                                                                                               |
+| 3.2 사전 알림            | 🔧   | 일괄 발송·CSV·캠페인(PAUSED↔SCHEDULED 전환·편집) ✅, 개별 발송 액션 컬럼 부재 (BE 엔드포인트 없음)                                                                                                                                  |
+| 3.3 지원자 관리          | ✅   | 목록·필터·Drawer 상세·합격불합격 분기·면접일자 컬럼(슬롯 예약 join) 완료. 개인정보 동의 일자 표시                                                                                                                                   |
+| 3.3.5 면접 슬롯          | ✅   | `/interview-slots` 신설 — 기수·파트 필터 + CRUD + Drawer + Dialog. `INTERVIEW_SLOTS_NOT_READY` → `InterviewSlotsRequiredModal` 로 페이지 navigate. 예약자 목록·예약 취소는 `ReservationsDrawer` + `CancelReservationDialog` 로 완료 |
+| 3.4 프로젝트 DB          | ✅   | 코드 완료 (브라우저 회귀 테스트 미실시) — PDF 업로드는 후속                                                                                                                                                                         |
+| 3.5 블로그 DB            | ✅   | 코드 완료 (브라우저 회귀 테스트 미실시)                                                                                                                                                                                             |
+| 3.6 FAQ                  | ✅   | MVP 제외 결정 (FE 하드코딩)                                                                                                                                                                                                         |
+| 5. 데이터 모델 타입 반영 | 🔧   | `@ddd/api` 생성 타입 도입 진행 중 — `pages/semesters/types.d.ts` 임시 타입 잔존                                                                                                                                                     |
 
 ---
 
@@ -50,7 +50,6 @@
 - ESLint + Prettier + Lefthook
 - FSD 디렉터리 구조 (`app / pages / widgets / shared`)
 - `AdminLayout` (SideBar + MobileHeader + Outlet)
-- `ThemeProvider` (localStorage, `d` 키 토글, 다크/라이트/시스템)
 
 **API 레이어 연동 현황**
 
@@ -221,18 +220,18 @@
 
 ### 6.1 MVP 포함 — 진행 상황
 
-| 영역 | 상태 | 비고 |
-| --- | --- | --- |
-| 홈페이지 — 홈 (소개/CTA/수치/미리보기/후원사/FAQ/지원 유도) | ⬜ | `apps/web` 스켈레톤 |
-| 홈페이지 — 모집 안내 (파트/프로세스/커리큘럼/지원 신청) | ⬜ | |
-| 홈페이지 — 지원 (사전 알림 / 지원서 + 개인정보 동의) | ⬜ | |
-| 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF) | ⬜ | `project/[id]` 라우트만 존재 |
-| 홈페이지 — 블로그 (외부 아티클 링크 목록) | ⬜ | |
-| 어드민 — 기수 관리 (상태 + 수동 변경) | ✅ | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환 |
-| 어드민 — 지원자 목록/상세/상태 변경 | ✅ | 목록·Drawer 상세·합격불합격 분기·면접일자 컬럼·개인정보 동의 일자 표시 완료 |
-| 어드민 — 사전 알림 DB + 수동 이메일 발송 | 🔧 | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
-| 어드민 — 프로젝트 DB 등록/수정 | ✅ | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
-| 어드민 — 블로그 DB 등록/수정 | ✅ | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시) |
+| 영역                                                        | 상태 | 비고                                                                                         |
+| ----------------------------------------------------------- | ---- | -------------------------------------------------------------------------------------------- |
+| 홈페이지 — 홈 (소개/CTA/수치/미리보기/후원사/FAQ/지원 유도) | ⬜   | `apps/web` 스켈레톤                                                                          |
+| 홈페이지 — 모집 안내 (파트/프로세스/커리큘럼/지원 신청)     | ⬜   |                                                                                              |
+| 홈페이지 — 지원 (사전 알림 / 지원서 + 개인정보 동의)        | ⬜   |                                                                                              |
+| 홈페이지 — 프로젝트 (목록+필터 / 상세 / PDF)                | ⬜   | `project/[id]` 라우트만 존재                                                                 |
+| 홈페이지 — 블로그 (외부 아티클 링크 목록)                   | ⬜   |                                                                                              |
+| 어드민 — 기수 관리 (상태 + 수동 변경)                       | ✅   | 목록/통계/등록/수정/상태변경/파트양식 저장 완료. 부분 실패 시 edit 모드 자동 전환            |
+| 어드민 — 지원자 목록/상세/상태 변경                         | ✅   | 목록·Drawer 상세·합격불합격 분기·면접일자 컬럼·개인정보 동의 일자 표시 완료                  |
+| 어드민 — 사전 알림 DB + 수동 이메일 발송                    | 🔧   | 목록/통계/일괄발송/CSV/캠페인(예약 발송 관리) 완료. 개별발송(백엔드 엔드포인트 없음) 대기 중 |
+| 어드민 — 프로젝트 DB 등록/수정                              | ✅   | 목록·필터·등록·수정·삭제 코드 완료 (브라우저 검증 미실시)                                    |
+| 어드민 — 블로그 DB 등록/수정                                | ✅   | 목록·검색·등록·수정·삭제 코드 완료 (브라우저 검증 미실시)                                    |
 
 ### 6.2 Phase 2
 
@@ -250,15 +249,14 @@ HTML 목업 대비 현재 코드의 **하드코딩 / API 미연동 / 미구현 �
 
 > 241ae4e 이전에 남아있던 "generated 미사용 / 패턴 불일치" 갭(cohort·auth·storage)은 openapi-fetch 마이그레이션으로 일괄 해소됨. 모든 도메인이 `api.get/post/...` 패턴으로 통일.
 
-| 도메인 | 문제 | 영향 |
-|---|---|---|
-| **storage** | `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 (BE 엔드포인트 추가 후 진행) | 파일 관리 기능 확장 불가 |
-| ~~**cohort**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
-| ~~**auth**~~ | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치 | 갭 해소 |
-| ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료 | 갭 해소 |
-| ~~**interview**~~ | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소 |
-| **early-notification** | `subscribeGeneral` query 미구현 | 웹앱 대기열 신청 미지원 |
-
+| 도메인                        | 문제                                                                                                             | 영향                     |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **storage**                   | `listFiles`·`deleteFile`·`createSignedUrl`·`downloadFile` queries 미구현 (BE 엔드포인트 추가 후 진행)            | 파일 관리 기능 확장 불가 |
+| ~~**cohort**~~                | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치                                                      | 갭 해소                  |
+| ~~**auth**~~                  | ✅ 241ae4e 이후 `api` 싱글톤 사용 — 다른 도메인과 패턴 일치                                                      | 갭 해소                  |
+| ~~**notification-campaign**~~ | ✅ SDK + 어드민 UI(`NotificationCampaignSection` / 편집 Drawer / pause·resume 토글) 연결 완료                    | 갭 해소                  |
+| ~~**interview**~~             | ✅ `cancelInterviewReservation` mutation + 어드민 UI(`ReservationsDrawer` / `CancelReservationDialog`) 연결 완료 | 갭 해소                  |
+| **early-notification**        | `subscribeGeneral` query 미구현                                                                                  | 웹앱 대기열 신청 미지원  |
 
 ### HTML 목업에는 있는데 미구현인 UI
 

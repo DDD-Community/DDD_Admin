@@ -7,7 +7,7 @@ src/
 ├── app/                        # 앱 초기화 레이어
 │   └── providers/
 │       ├── QueryProvider.tsx   # TanStack Query Provider
-│       └── ThemeProvider.tsx   # 전역 테마 Provider + useTheme 훅
+│
 │
 ├── pages/                      # 페이지 레이어 (라우트 1:1 대응, 주요 feature 단위)
 │   ├── index.tsx               # 라우터 설정 (createBrowserRouter)
@@ -70,11 +70,11 @@ app → pages → widgets → entities → shared
 
 새 훅을 추가할 때는 [CODE_RULES.md §3.3](../CODE_RULES.md) 의 분류 표를 따른다.
 
-| 유형 | 예시 | 위치 |
-| ---- | ---- | ---- |
+| 유형                                                        | 예시                                                              | 위치                                   |
+| ----------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- |
 | **쿼리/뮤테이션 팩토리** (`queryOptions`/`mutationOptions`) | `applicationQueries.getAdminApplications`, `authMutations.logout` | `packages/api/src/{domain}/queries.ts` |
-| **비즈니스 흐름 훅** (API + toast/라우팅/캐시 정리 등) | `useLogoutFlow`, `useApplicationsBoard` | `entities/{domain}/model/` |
-| **UI/플랫폼 훅** (도메인 무관) | `useIsMobile`, `useTheme` | `shared/hooks/` |
+| **비즈니스 흐름 훅** (API + toast/라우팅/캐시 정리 등)      | `useLogoutFlow`, `useApplicationsBoard`                           | `entities/{domain}/model/`             |
+| **UI/플랫폼 훅** (도메인 무관)                              | `useIsMobile`, `useTheme`                                         | `shared/hooks/`                        |
 
 ---
 

@@ -11,14 +11,12 @@
 
 ```tsx
 // apps/admin/src/main.tsx
-import { Toast } from "@heroui/react"
+import { Toast } from "@heroui/react";
 
 <QueryProvider>
-  <ThemeProvider>
-    <Router />
-    <Toast.Provider placement="top end" />
-  </ThemeProvider>
-</QueryProvider>
+  <Router />
+  <Toast.Provider placement="top end" />
+</QueryProvider>;
 ```
 
 `placement`는 어드민 표준으로 `"top end"` (우측 상단)을 사용한다. 화면 단에서 변경하지 않는다.
@@ -30,20 +28,20 @@ import { Toast } from "@heroui/react"
 `@heroui/react`에서 `toast` 함수 객체를 직접 import한다. (대문자 `Toast`는 컴포넌트, 소문자 `toast`는 명령형 호출용 함수다.)
 
 ```tsx
-import { toast } from "@heroui/react"
+import { toast } from "@heroui/react";
 
-toast.success("제목", { description: "보충 설명" })
-toast.error("제목", { description: "에러 상세" })
-toast.info("제목", { description: "정보 메시지" })
-toast.warning("제목", { description: "주의 메시지" })
+toast.success("제목", { description: "보충 설명" });
+toast.error("제목", { description: "에러 상세" });
+toast.info("제목", { description: "정보 메시지" });
+toast.warning("제목", { description: "주의 메시지" });
 ```
 
-| 메서드 | 용도 |
-| --- | --- |
+| 메서드          | 용도                                        |
+| --------------- | ------------------------------------------- |
 | `toast.success` | 저장/생성/삭제 등 사용자 액션이 성공했을 때 |
-| `toast.error` | API 실패, 검증 실패, 네트워크 오류 |
-| `toast.info` | 단순 안내 (알림 발송 예정 등) |
-| `toast.warning` | 비파괴 경고 (저장 안 한 변경 등) |
+| `toast.error`   | API 실패, 검증 실패, 네트워크 오류          |
+| `toast.info`    | 단순 안내 (알림 발송 예정 등)               |
+| `toast.warning` | 비파괴 경고 (저장 안 한 변경 등)            |
 
 > 두 번째 인자(옵션 객체)의 `description` 외 다른 옵션이 필요하면 `docs/hero-ui.txt`의 Toast 항목 또는 HeroUI 공식 문서를 참조한다.
 
@@ -55,19 +53,19 @@ toast.warning("제목", { description: "주의 메시지" })
 
 ### 성공 메시지
 
-| 상황 | title | description |
-| --- | --- | --- |
-| 등록 성공 | `"프로젝트가 저장되었습니다"` | `"홈페이지에 노출됩니다."` |
-| 수정 성공 | `"수정되었습니다"` | (필요 시 무엇이 바뀌었는지) |
-| 삭제 성공 | `"삭제되었습니다"` | (필요 시 항목 식별자) |
-| 일괄 작업 | `"전체 알림 발송 완료"` | `\`신청자 ${total}명에게 알림을 보냈습니다.\`` |
+| 상황      | title                         | description                                    |
+| --------- | ----------------------------- | ---------------------------------------------- |
+| 등록 성공 | `"프로젝트가 저장되었습니다"` | `"홈페이지에 노출됩니다."`                     |
+| 수정 성공 | `"수정되었습니다"`            | (필요 시 무엇이 바뀌었는지)                    |
+| 삭제 성공 | `"삭제되었습니다"`            | (필요 시 항목 식별자)                          |
+| 일괄 작업 | `"전체 알림 발송 완료"`       | `\`신청자 ${total}명에게 알림을 보냈습니다.\`` |
 
 ### 실패 메시지
 
 ```tsx
 toast.error("저장에 실패했습니다", {
   description: (error as Error).message ?? "잠시 후 다시 시도해 주세요.",
-})
+});
 ```
 
 - 백엔드가 내려준 메시지를 우선 사용한다 (`(error as Error).message`).
@@ -81,28 +79,28 @@ toast.error("저장에 실패했습니다", {
 ### 4.1 mutation 성공/실패 처리
 
 ```tsx
-import { toast } from "@heroui/react"
-import { useUpdateProject } from "@ddd/api"
-import { useQueryClient } from "@tanstack/react-query"
-import { projectKeys } from "@ddd/api"
+import { toast } from "@heroui/react";
+import { useUpdateProject } from "@ddd/api";
+import { useQueryClient } from "@tanstack/react-query";
+import { projectKeys } from "@ddd/api";
 
-const queryClient = useQueryClient()
-const { mutateAsync, isPending } = useUpdateProject()
+const queryClient = useQueryClient();
+const { mutateAsync, isPending } = useUpdateProject();
 
 const handleSubmit = async (payload) => {
   try {
-    await mutateAsync({ params: { id }, payload })
-    queryClient.invalidateQueries({ queryKey: projectKeys.all })
+    await mutateAsync({ params: { id }, payload });
+    queryClient.invalidateQueries({ queryKey: projectKeys.all });
     toast.success("프로젝트가 저장되었습니다", {
       description: "홈페이지에 노출됩니다.",
-    })
-    onClose()
+    });
+    onClose();
   } catch (error) {
     toast.error("저장에 실패했습니다", {
       description: (error as Error).message,
-    })
+    });
   }
-}
+};
 ```
 
 ### 4.2 일괄 액션 알림 (`EarlyNotificationContent` 패턴)
@@ -112,8 +110,8 @@ const handleBulkSend = () => {
   // ... 발송 로직
   toast.success("전체 알림 발송 완료", {
     description: `신청자 ${total}명에게 알림을 보냈습니다.`,
-  })
-}
+  });
+};
 ```
 
 ### 4.3 삭제 확인 (`AlertDialog` 흐름과 함께)
@@ -121,16 +119,16 @@ const handleBulkSend = () => {
 ```tsx
 const handleConfirmDelete = async () => {
   try {
-    await mutateAsync({ params: { id } })
-    queryClient.invalidateQueries({ queryKey: projectKeys.all })
-    toast.success("삭제되었습니다")
-    setOpen(false)
+    await mutateAsync({ params: { id } });
+    queryClient.invalidateQueries({ queryKey: projectKeys.all });
+    toast.success("삭제되었습니다");
+    setOpen(false);
   } catch (error) {
     toast.error("삭제에 실패했습니다", {
       description: (error as Error).message,
-    })
+    });
   }
-}
+};
 ```
 
 ---
