@@ -27,6 +27,7 @@ import { FormField } from "@/shared/ui/FormField"
 import { Section } from "@/shared/ui/Section"
 
 import { MemberRow } from "./components/MemberRow"
+import { PdfUploader } from "./components/PdfUploader"
 import { ThumbnailUploader } from "./components/ThumbnailUploader"
 
 export type ProjectFormDrawerMode = "create" | "edit"
@@ -111,6 +112,10 @@ export const ProjectFormDrawer = ({
                 <Section title="프로젝트 정보">
                   <FormField label="썸네일 이미지">
                     <ThumbnailUploader />
+                  </FormField>
+
+                  <FormField label="프로젝트 소개 PDF">
+                    <PdfUploader />
                   </FormField>
 
                   <FormField label="서비스명" error={errors.name?.message}>

@@ -10,18 +10,16 @@ export const storageMutations = {
    *
    * @example
    * const mutation = useMutation(storageMutations.uploadFile())
-   * const formData = new FormData()
-   * formData.append('file', file)
-   * mutation.mutate({ params: { category: 'project-thumbnail' }, payload: formData })
+   * mutation.mutate({ params: { category: 'project-pdf' }, file })
    */
   uploadFile: () =>
     mutationOptions({
       mutationFn: ({
         params,
-        payload,
+        file,
       }: {
         params: PostUploadFileParams;
-        payload: FormData;
-      }) => storageApi.uploadFile({ params, payload }),
+        file: File;
+      }) => storageApi.uploadFile({ params, file }),
     }),
 };

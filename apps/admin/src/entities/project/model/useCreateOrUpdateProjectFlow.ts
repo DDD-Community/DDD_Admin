@@ -48,6 +48,7 @@ export const useCreateOrUpdateProjectFlow = ({
           name: values.name,
           description: values.description,
           ...(values.thumbnailUrl ? { thumbnailUrl: values.thumbnailUrl } : {}),
+          ...(values.pdfUrl ? { pdfUrl: values.pdfUrl } : {}),
           members: values.members,
         }
         await createProject.mutateAsync({ payload })
@@ -64,6 +65,7 @@ export const useCreateOrUpdateProjectFlow = ({
           name: values.name,
           description: values.description,
           ...(values.thumbnailUrl ? { thumbnailUrl: values.thumbnailUrl } : {}),
+          ...(values.pdfUrl ? { pdfUrl: values.pdfUrl } : {}),
         }
         await updateProject.mutateAsync({
           params: { id: targetId },

@@ -11,5 +11,12 @@ export type FileUploadCategory = PostUploadFileParams["category"];
 // 엔티티 타입 (BE 응답 schema 미정의 → 수동 정의)
 export interface FileUploadDto {
   url: string;
-  key: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+}
+
+export interface FileUploadConstraint {
+  allowedMimeTypes: readonly string[];
+  maxBytes: number;
 }

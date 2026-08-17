@@ -5,13 +5,14 @@ import { z } from "zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button, Drawer, Input, TextArea, toast } from "@heroui/react"
 
-import { blogKeys, blogMutations, storageMutations } from "@ddd/api"
+import { blogKeys, blogMutations } from "@ddd/api"
 import type {
   BlogPostDto,
   PostCreateBlogPostRequest,
   PatchUpdateBlogPostRequest,
 } from "@ddd/api"
 
+import { useFileUploadFlow } from "@/entities/storage"
 import { cn } from "@/shared/lib/cn"
 import { useIsMobile } from "@/shared/hooks/useIsMobile"
 import { FormField } from "@/shared/ui/FormField"
@@ -83,23 +84,11 @@ export const BlogPostFormDrawer = ({
 
   const createBlogPost = useMutation(blogMutations.createBlogPost())
   const updateBlogPost = useMutation(blogMutations.updateBlogPost())
-  const uploadFile = useMutation(storageMutations.uploadFile())
-
-  const handleThumbnailUpload = async (file: File) => {
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-      const result = await uploadFile.mutateAsync({
-        params: { category: "blog-thumbnail" },
-        payload: formData,
-      })
-      setValue("thumbnail", result.url, { shouldValidate: true })
-    } catch (error) {
-      toast.danger("썸네일 업로드에 실패했습니다", {
-        description: (error as Error).message,
-      })
-    }
-  }
+  const { upload: uploadThumbnail, isUploading } = useFileUploadFlow({
+    category: "blog-thumbnail",
+    failureTitle: "썸네일 업로드에 실패했습니다",
+    onUploaded: (url) => setValue("thumbnail", url, { shouldValidate: true }),
+  })
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -138,7 +127,6 @@ export const BlogPostFormDrawer = ({
   })
 
   const thumbnailUrl = useWatch({ control, name: "thumbnail" })
-  console.log("thumbnailUrl", thumbnailUrl)
 
   return (
     <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -157,8 +145,8 @@ export const BlogPostFormDrawer = ({
               <FormField label="썸네일 이미지">
                 <ThumbnailUploader
                   url={thumbnailUrl}
-                  isUploading={uploadFile.isPending}
-                  onSelect={handleThumbnailUpload}
+                  isUploading={isUploading}
+                  onSelect={uploadThumbnail}
                   onClear={() =>
                     setValue("thumbnail", "", { shouldValidate: true })
                   }

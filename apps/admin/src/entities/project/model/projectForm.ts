@@ -28,6 +28,7 @@ export const projectFormSchema = z.object({
     .url("URL 형식이 아닙니다.")
     .optional()
     .or(z.literal("")),
+  pdfUrl: z.string().url("URL 형식이 아닙니다.").optional().or(z.literal("")),
   members: z.array(memberSchema),
 })
 
@@ -41,6 +42,7 @@ export const buildProjectFormDefaults = (
   name: project?.name ?? "",
   description: project?.description ?? "",
   thumbnailUrl: project?.thumbnailUrl ?? "",
+  pdfUrl: project?.pdfUrl ?? "",
   members:
     project?.members?.map((m) => ({
       name: m.name,

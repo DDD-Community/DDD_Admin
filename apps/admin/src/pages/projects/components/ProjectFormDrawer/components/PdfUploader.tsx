@@ -9,35 +9,42 @@ import {
 } from "@/entities/storage"
 import { cn } from "@/shared/lib/cn"
 
-export const ThumbnailUploader = () => {
+/** URL 마지막 세그먼트를 파일명으로 표시 (파싱 실패 시 전체 URL) */
+const fileNameFromUrl = (url: string): string => {
+  try {
+    const path = new URL(url).pathname
+    return decodeURIComponent(path.slice(path.lastIndexOf("/") + 1)) || url
+  } catch {
+    return url
+  }
+}
+
+export const PdfUploader = () => {
   const { control, setValue } = useFormContext<ProjectFormValues>()
-  const url = useWatch({ control, name: "thumbnailUrl" })
+  const url = useWatch({ control, name: "pdfUrl" })
 
   const { upload, isUploading, constraint } = useFileUploadFlow({
-    category: "project-thumbnail",
-    failureTitle: "썸네일 업로드에 실패했습니다",
+    category: "project-pdf",
+    failureTitle: "PDF 업로드에 실패했습니다",
     onUploaded: (uploadedUrl) =>
-      setValue("thumbnailUrl", uploadedUrl, { shouldValidate: true }),
+      setValue("pdfUrl", uploadedUrl, { shouldValidate: true }),
   })
 
-  const handleClear = () =>
-    setValue("thumbnailUrl", "", { shouldValidate: true })
+  const handleClear = () => setValue("pdfUrl", "", { shouldValidate: true })
 
   return (
     <div className="space-y-2">
       {url ? (
-        <div className="relative inline-block">
-          <img
-            src={url}
-            alt="썸네일 미리보기"
-            className="h-24 w-24 rounded-md border border-gray-200 object-cover"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={handleClear}
-            className="ml-2"
+        <div className="flex items-center gap-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="truncate text-sm text-blue-600 underline"
           >
+            {fileNameFromUrl(url)}
+          </a>
+          <Button size="sm" variant="outline" onPress={handleClear}>
             제거
           </Button>
         </div>
@@ -61,10 +68,10 @@ export const ThumbnailUploader = () => {
           />
           <div className="space-y-1">
             <p className="text-sm text-gray-600">
-              {isUploading ? "업로드 중..." : "이미지를 클릭해서 업로드"}
+              {isUploading ? "업로드 중..." : "PDF를 클릭해서 업로드"}
             </p>
             <p className="text-xs text-gray-400">
-              PNG, JPG, WEBP (최대 {toMegabytes(constraint.maxBytes)}MB)
+              PDF (최대 {toMegabytes(constraint.maxBytes)}MB)
             </p>
           </div>
         </label>
