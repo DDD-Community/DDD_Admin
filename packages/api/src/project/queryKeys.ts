@@ -45,19 +45,8 @@ export const projectKeys = {
   detail: (params: GetProjectParams) =>
     [...projectKeys.all, "detail", params] as const,
 
-  /** 어드민 프로젝트 전체 목록 key */
+  /** 어드민 프로젝트 전체 목록 key (엔드포인트에 파라미터·커서 없음) */
   adminLists: () => [...projectKeys.all, "admin-list"] as const,
-
-  /** 어드민 프로젝트 무한 스크롤 목록 key */
-  adminInfiniteLists: () => [...projectKeys.all, "admin-infinite-list"] as const,
-
-  /**
-   * 어드민 프로젝트 무한 스크롤 필터 key
-   *
-   * @param {GetInfiniteProjectsParams} params - 조회 파라미터 (cursor 제외)
-   */
-  adminInfiniteList: (params: GetInfiniteProjectsParams) =>
-    [...projectKeys.adminInfiniteLists(), params] as const,
 
   /** 어드민 프로젝트 단건 key */
   adminDetails: () => [...projectKeys.all, "admin-detail"] as const,

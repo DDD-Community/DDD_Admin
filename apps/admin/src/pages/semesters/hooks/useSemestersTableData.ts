@@ -65,7 +65,7 @@ export const useSemestersTableData = (): Result => {
   })
 
   const tableRows: CohortRow[] = useMemo(() => {
-    const projects: ProjectDto[] = projectsQuery.data?.items ?? []
+    const projects: ProjectDto[] = projectsQuery.data ?? []
     const projectsFailed = projectsQuery.isError
 
     return cohorts

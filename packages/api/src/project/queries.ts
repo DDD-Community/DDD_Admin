@@ -44,6 +44,11 @@ export const projectQueries = {
    * cursor는 useInfiniteQuery의 pageParam으로 자동 관리되므로
    * params에 cursor를 직접 전달하지 않는다.
    *
+   * ⚠️ 다음 커서(`nextCursor`/`hasNext`)는 공통 응답 래퍼의 `data` 가 아니라
+   * 형제 필드인 `meta` 로 내려오는데, `ApiClient` 가 `data` 만 반환하며 `meta` 를
+   * 버린다. 따라서 현재는 **첫 페이지만** 조회된다. 무한 스크롤이 실제로 필요해지면
+   * 클라이언트에 `meta` 전달 경로를 먼저 추가해야 한다.
+   *
    * @param {GetInfiniteProjectsParams} params - 조회 파라미터 (cursor 제외)
    * @param {ProjectPlatform} [params.platform] - 플랫폼 필터 (선택)
    * @param {number} [params.limit] - 페이지 크기 (1-100, 선택)
@@ -63,8 +68,7 @@ export const projectQueries = {
       queryFn: ({ pageParam }) =>
         projectAPI.getProjects({ params: { ...params, cursor: pageParam } }),
       initialPageParam: undefined as string | undefined,
-      getNextPageParam: (last) =>
-        last.hasMore ? last.nextCursor : undefined,
+      getNextPageParam: () => undefined,
     }),
 
   /**
@@ -86,36 +90,11 @@ export const projectQueries = {
     }),
 
   /**
-   * 어드민 프로젝트 무한 스크롤 목록 조회 쿼리 (GET /admin/projects)
+   * 어드민 프로젝트 전체 목록 조회 쿼리 (GET /admin/projects)
    *
-   * 어드민 페이지에서 사용. cursor는 useInfiniteQuery의 pageParam으로 관리.
-   *
-   * @param {GetInfiniteProjectsParams} params - 조회 파라미터 (cursor 제외)
-   * @param {number} [params.limit] - 페이지 크기 (선택)
-   *
-   * @returns {InfiniteQueryOptions} TanStack Query Infinite 옵션 객체
-   *
-   * @example
-   * const query = useInfiniteQuery(projectQueries.getAdminInfiniteProjects({ params: { limit: 20 } }))
-   */
-  getAdminInfiniteProjects: ({
-    params,
-  }: {
-    params: GetInfiniteProjectsParams;
-  }) =>
-    infiniteQueryOptions({
-      queryKey: projectKeys.adminInfiniteList(params),
-      queryFn: () => projectAPI.getAdminProjects(),
-      initialPageParam: undefined as string | undefined,
-      getNextPageParam: (last) =>
-        last.hasMore ? last.nextCursor : undefined,
-    }),
-
-  /**
-   * 어드민 프로젝트 전체 목록 조회 쿼리 (GET /admin/projects, non-infinite)
-   *
-   * 단일 호출로 모든 프로젝트를 받아온다. cursor 페이지네이션이 필요한 화면은
-   * getAdminInfiniteProjects 를 사용한다.
+   * 어드민 목록 엔드포인트는 쿼리 파라미터·커서를 받지 않고 단일 호출로 모든
+   * 프로젝트를 내려준다. 각 항목에 `members` / `pdfUrl` 이 포함되므로 수정 드로워는
+   * 상세 API 를 추가 호출하지 않아도 된다. 플랫폼·기수·검색 필터는 클라이언트에서 처리한다.
    *
    * @returns {QueryOptions} TanStack Query 옵션 객체
    */

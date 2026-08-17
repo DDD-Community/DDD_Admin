@@ -1,6 +1,5 @@
 import { useMemo } from "react"
-import { Button } from "@heroui/react"
-import { useSuspenseInfiniteQuery } from "@tanstack/react-query"
+import { useSuspenseQuery } from "@tanstack/react-query"
 
 import { projectQueries } from "@ddd/api"
 import type { CohortDto, ProjectDto } from "@ddd/api"
@@ -13,8 +12,6 @@ import type {
   CohortFilterValue,
   PlatformFilterValue,
 } from "./components/ProjectsToolbar"
-
-const PAGE_LIMIT = 20
 
 type ProjectsDataViewProps = {
   searchText: string
@@ -33,20 +30,10 @@ export const ProjectsDataView = ({
   onEdit,
   onDelete,
 }: ProjectsDataViewProps) => {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useSuspenseInfiniteQuery(
-      projectQueries.getAdminInfiniteProjects({
-        params: {
-          platform: platform === "ALL" ? undefined : platform,
-          limit: PAGE_LIMIT,
-        },
-      })
-    )
+  // 어드민 목록은 파라미터 없이 전체를 한 번에 내려준다 (커서 페이지네이션 없음).
+  const { data } = useSuspenseQuery(projectQueries.getAdminProjects())
 
-  const allProjects = useMemo<ProjectDto[]>(
-    () => data.pages.flatMap((page) => page.items).filter(Boolean),
-    [data]
-  )
+  const allProjects = useMemo<ProjectDto[]>(() => data ?? [], [data])
 
   const cohortById = useMemo(
     () => new Map(cohorts.map((c) => [c.id, c])),
@@ -58,9 +45,11 @@ export const ProjectsDataView = ({
       const matchesSearch =
         searchText.length === 0 || project.name.includes(searchText)
       const matchesCohort = cohortId === "ALL" || project.cohortId === cohortId
-      return matchesSearch && matchesCohort
+      const matchesPlatform =
+        platform === "ALL" || project.platforms.includes(platform)
+      return matchesSearch && matchesCohort && matchesPlatform
     })
-  }, [allProjects, searchText, cohortId])
+  }, [allProjects, searchText, cohortId, platform])
 
   if (filteredProjects.length === 0) {
     return (
@@ -83,18 +72,7 @@ export const ProjectsDataView = ({
       <FlexBox className="justify-between pt-2">
         <span className="text-muted-foreground text-xs">
           현재 {filteredProjects.length}개 표시
-          {hasNextPage ? " · 더 있음" : ""}
         </span>
-        {hasNextPage && (
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() => fetchNextPage()}
-            isDisabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? "불러오는 중..." : "더 보기"}
-          </Button>
-        )}
       </FlexBox>
     </>
   )

@@ -93,7 +93,7 @@ export const ProjectsTable = ({
   )
 }
 
-const Thumbnail = ({ src, alt }: { src?: string; alt: string }) => {
+const Thumbnail = ({ src, alt }: { src?: string | null; alt: string }) => {
   if (!src) {
     return (
       <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-xs text-gray-400">
