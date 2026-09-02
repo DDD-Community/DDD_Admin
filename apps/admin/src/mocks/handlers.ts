@@ -1,5 +1,7 @@
 import type { RequestHandler } from "msw"
 
+import { interviewBookingHandlers } from "./interviewBooking.handlers"
+
 /**
  * MSW 핸들러 목록
  *
@@ -7,7 +9,8 @@ import type { RequestHandler } from "msw"
  *   1. {도메인}.handlers.ts 에 핸들러 배열 작성
  *   2. 아래 handlers 배열에 ...{도메인}Handlers 추가
  *
- * 현재 등록된 핸들러: 없음 (모든 어드민 페이지가 `@ddd/api` 실 API 훅 사용).
- * MSW 인프라는 보존되며, `VITE_MSW_ENABLED=true` 환경에서만 활성화된다 (`main.tsx`).
+ * 어드민 페이지는 모두 `@ddd/api` 실 API 를 쓴다. 지원자 예약 페이지(`/interview`)만
+ * 실제 예약 토큰 없이 화면을 확인할 수 있도록 목을 둔다.
+ * `VITE_MSW_ENABLED=true` 환경에서만 활성화된다 (`main.tsx`).
  */
-export const handlers: RequestHandler[] = []
+export const handlers: RequestHandler[] = [...interviewBookingHandlers]

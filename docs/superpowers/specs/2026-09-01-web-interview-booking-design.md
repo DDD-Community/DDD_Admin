@@ -1,7 +1,10 @@
 # 면접 슬롯 지원자 셀프 예약 페이지 (apps/web) 설계
 
 - 작성일: 2026-09-01
-- 상태: 설계 승인됨
+- 상태: **apps/admin 으로 이관됨 (2026-09-02)** — 아래 설계는 이관 전 원안이다
+  - 이관 사유: BE 배포 워크플로가 메일 링크를 `https://admin.dddstudy.kr/interview` 로 하드코딩해 발송했고, apps/web 은 Vercel 자동 배포와 BE URL 변경이라는 외부 의존이 남아 있었다. 이미 발송된 링크를 즉시 살리기 위해 어드민 SPA 에 로그인 가드 밖 공개 라우트 `/interview` 를 두는 것으로 확정했다.
+  - 구현 위치: `apps/admin/src/pages/interview-booking/` (콜로케이션). 상태 전이·에러 매핑(§5)·KST 규칙(§6)은 그대로 유지하되, 로딩·에러는 어드민 관례대로 `Suspense` + `ErrorBoundary` 경계로 처리하고 조회는 TanStack Query 로 옮겼다.
+  - apps/web 의 `/interview/booking` 구현은 제거했다.
 - BE 계약: [DDD_BE#87](https://github.com/DDD-Community/DDD_BE/pull/87) (`feat/interview-booking`), BE 스펙 `docs/superpowers/specs/2026-08-29-interview-booking-design.md`
 
 ## 1. 배경

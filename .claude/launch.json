@@ -1,0 +1,31 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "admin",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "apps/admin/node_modules/vite/bin/vite.js",
+        "apps/admin",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "admin-msw",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "VITE_MSW_ENABLED=true",
+        "node",
+        "apps/admin/node_modules/vite/bin/vite.js",
+        "apps/admin",
+        "--port",
+        "5174",
+        "--strictPort"
+      ],
+      "port": 5174
+    }
+  ]
+}

@@ -8,6 +8,8 @@ import BlogPostsPage from "./blog-posts/BlogPostsPage"
 import { ErrorPage } from "./error/ErrorPage"
 import { AdminLayout } from "@/shared/ui/AdminLayout/AdminLayout"
 import ApplicationsPage from "./applications/ApplicationsPage"
+import InterviewBookingPage from "./interview-booking/InterviewBookingPage"
+import { paths } from "@/shared/lib/paths"
 
 /** 라우터 설정 (리액트 라우터 Data Mode 기반) */
 const router = createBrowserRouter([
@@ -52,6 +54,12 @@ const router = createBrowserRouter([
         errorElement: <ErrorPage />,
       },
     ],
+  },
+  {
+    // 서류 합격 메일의 지원자 예약 링크. 로그인 가드(AdminLayout) 바깥의 공개 라우트다.
+    path: paths.interviewBooking,
+    element: <InterviewBookingPage />,
+    errorElement: <ErrorPage />,
   },
   {
     path: "/",
