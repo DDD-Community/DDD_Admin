@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import styled from "@emotion/styled";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 import {
   BookingApiError,
+  createBookingReservation,
   fetchBookingContext,
   fetchBookingSlots,
   type BookingContext,
@@ -16,19 +17,29 @@ import {
   formatKstTimeRange,
   groupSlotsByKstDate,
 } from "@/lib/mappers/interviewBookingSlots";
+import { BookingConfirmModal } from "@/components/modals/BookingConfirmModal";
 
 /**
- * 섹션 상태 머신 (설계 §5). `confirming` 은 Task 3 이 확인 모달과 함께 붙인다.
+ * 섹션 상태 머신 (설계 §5).
  *
  * - `loading`: 마운트 시 / "다시 시도" 후 context·slots 조회 중
  * - `invalid`: `token` 쿼리 없음
- * - `expired`: `GET /context` 401
- * - `ineligible`: `GET /context` 403
+ * - `expired`: `GET /context` 401 또는 확정 요청 401
+ * - `ineligible`: `GET /context` 403 또는 확정 요청 403
  * - `booking`: 예약 가능 — 슬롯 목록 + 하단 고정 CTA
+ * - `confirming`: `booking` 화면 위에 확인 모달(`BookingConfirmModal`)을 띄운 상태
  * - `done`: context 에 기존 예약이 있음(재접속 시에도 항상 이 화면)
  * - `failed`: 네트워크/5xx — 다시 시도 가능
  */
-type SectionStatus = "loading" | "invalid" | "expired" | "ineligible" | "booking" | "done" | "failed";
+type SectionStatus =
+  | "loading"
+  | "invalid"
+  | "expired"
+  | "ineligible"
+  | "booking"
+  | "confirming"
+  | "done"
+  | "failed";
 
 const NOTICE_TEXT: Record<"invalid" | "expired" | "ineligible" | "failed", string> = {
   invalid: "잘못된 접근입니다. 메일의 예약 링크로 다시 들어와 주세요",
@@ -309,10 +320,20 @@ export const InterviewBookingSection = () => {
   const [context, setContext] = useState<BookingContext | null>(null);
   const [slots, setSlots] = useState<BookingSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
-  /** 목록 상단 인라인 에러 배너 문구 — Task 3 이 409/400/404 케이스에서 채운다. */
+  /** 목록 상단 인라인 에러 배너 문구. SLOT_FULL/CLOSED/NOT_FOUND 확정 실패 시 재조회 후 채운다. */
   const [banner, setBanner] = useState<string | null>(null);
-  /** "다시 시도" 버튼이 이 값을 올려 재조회 effect 를 다시 태운다. */
+  /** "다시 시도" 버튼 또는 확정 실패 후 슬롯 재조회가 이 값을 올려 아래 effect 를 다시 태운다. */
   const [reloadCount, setReloadCount] = useState(0);
+  /** POST /reservations 요청 진행 중 여부 — 모달 버튼 비활성/라벨 전환 + 중복 제출 방지. */
+  const [isConfirming, setIsConfirming] = useState(false);
+  /** 확정 요청이 재시도 가능한 에러로 실패했을 때 모달 안에 보여줄 문구. */
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  /**
+   * SLOT_FULL/CLOSED/NOT_FOUND 로 슬롯을 재조회할 때 재조회가 끝난 뒤에 띄울 배너.
+   * 아래 effect 가 재조회 시작 시 `banner` 를 곧장 비우므로, 재조회 완료 후에야
+   * 반영해야 하는 배너는 상태가 아니라 ref 로 들고 있다가 effect 안에서 적용한다.
+   */
+  const pendingBannerRef = useRef<string | null>(null);
 
   // 재조회 함수를 useCallback 으로 밖에 빼지 않고 effect 안에 그대로 둔다 — 밖으로 빼면
   // 클린업 시점의 stale 응답(예: token 이 바뀐 뒤 늦게 도착한 이전 요청)이 최신 상태를
@@ -345,6 +366,10 @@ export const InterviewBookingSection = () => {
           setSlots(nextSlots);
           setSelectedSlotId(null);
           setStatus("booking");
+          if (pendingBannerRef.current) {
+            setBanner(pendingBannerRef.current);
+            pendingBannerRef.current = null;
+          }
         } catch (error) {
           if (ignore) return;
           if (error instanceof BookingApiError) {
@@ -371,6 +396,77 @@ export const InterviewBookingSection = () => {
   );
 
   const slotGroups = useMemo(() => groupSlotsByKstDate(slots), [slots]);
+  const selectedSlot =
+    selectedSlotId !== null ? (slots.find((slot) => slot.id === selectedSlotId) ?? null) : null;
+
+  /**
+   * 확인 모달의 [예약 확정] 핸들러. 에러 매핑(설계 §4.3, 브리프 Step 2):
+   *
+   * - 201 → 응답 예약 정보로 `done`
+   * - `INTERVIEW_RESERVATION_EXISTS` → `fetchBookingContext` 재조회 후 `done`
+   *   (경합으로 다른 탭/재시도가 먼저 확정한 경우 — 이미 잡힌 예약을 그대로 보여준다)
+   * - `INTERVIEW_SLOT_FULL` / `INTERVIEW_SLOT_CLOSED` / `INTERVIEW_SLOT_NOT_FOUND`
+   *   → 선택 해제 + 배너 예약 + `reloadCount` 를 올려 기존 재조회 effect 를 재사용
+   * - `status === 401` → `expired`, `status === 403` → `ineligible`
+   * - 그 외/네트워크 → 모달을 유지한 채 모달 내 에러 문구만 채워 재시도 가능하게 한다
+   *   (사용자가 고른 슬롯과 모달을 잃지 않도록)
+   */
+  async function onConfirmReservation() {
+    if (!token || selectedSlotId === null || isConfirming) return;
+
+    setIsConfirming(true);
+    setConfirmError(null);
+
+    try {
+      const reservation = await createBookingReservation(token, selectedSlotId);
+      setContext((prev) => (prev ? { ...prev, reservation } : prev));
+      setStatus("done");
+      return;
+    } catch (error) {
+      if (error instanceof BookingApiError) {
+        if (error.code === "INTERVIEW_RESERVATION_EXISTS") {
+          try {
+            const nextContext = await fetchBookingContext(token);
+            setContext(nextContext);
+            setStatus("done");
+          } catch {
+            setConfirmError("예약 확인 중 문제가 발생했어요. 다시 시도해주세요.");
+          }
+          return;
+        }
+
+        if (error.code === "INTERVIEW_SLOT_FULL") {
+          pendingBannerRef.current = "방금 마감되었어요. 다른 시간을 골라주세요";
+          setSelectedSlotId(null);
+          setReloadCount((count) => count + 1);
+          return;
+        }
+
+        if (error.code === "INTERVIEW_SLOT_CLOSED" || error.code === "INTERVIEW_SLOT_NOT_FOUND") {
+          pendingBannerRef.current = error.message;
+          setSelectedSlotId(null);
+          setReloadCount((count) => count + 1);
+          return;
+        }
+
+        if (error.status === 401) {
+          setStatus("expired");
+          return;
+        }
+        if (error.status === 403) {
+          setStatus("ineligible");
+          return;
+        }
+
+        setConfirmError(error.message || "예약 확정 중 문제가 발생했어요. 다시 시도해주세요.");
+        return;
+      }
+
+      setConfirmError("예약 확정 중 문제가 발생했어요. 다시 시도해주세요.");
+    } finally {
+      setIsConfirming(false);
+    }
+  }
 
   if (status === "loading") {
     return (
@@ -426,7 +522,7 @@ export const InterviewBookingSection = () => {
     );
   }
 
-  // status === "booking"
+  // status === "booking" | "confirming" — confirming 은 이 화면 위에 확인 모달을 얹는다
   return (
     <Wrap>
       <BookingWrap>
@@ -470,10 +566,34 @@ export const InterviewBookingSection = () => {
       </BookingWrap>
 
       <CtaBar>
-        <CtaButton type="button" disabled={selectedSlotId === null} onClick={() => {}}>
+        <CtaButton
+          type="button"
+          disabled={selectedSlotId === null}
+          onClick={() => {
+            if (selectedSlotId === null) return;
+            setConfirmError(null);
+            setStatus("confirming");
+          }}
+        >
           이 시간으로 예약
         </CtaButton>
       </CtaBar>
+
+      {status === "confirming" && selectedSlot ? (
+        <BookingConfirmModal
+          slot={selectedSlot}
+          confirming={isConfirming}
+          errorMessage={confirmError}
+          onCancel={() => {
+            if (isConfirming) return;
+            setConfirmError(null);
+            setStatus("booking");
+          }}
+          onConfirm={() => {
+            void onConfirmReservation();
+          }}
+        />
+      ) : null}
     </Wrap>
   );
 };
