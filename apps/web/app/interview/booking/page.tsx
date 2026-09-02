@@ -7,7 +7,7 @@ import { InterviewBookingSection } from "@/components/sections/InterviewBookingS
  * Navigation/Footer 도 두지 않는다 — 예약 도중 이탈 경로만 만든다(설계 §3).
  */
 export const metadata: Metadata = {
-  title: "면접 시간 예약 | DDD",
+  title: "면접 시간 예약",
   robots: { index: false, follow: false },
 };
 

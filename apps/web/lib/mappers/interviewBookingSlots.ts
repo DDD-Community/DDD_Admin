@@ -31,24 +31,29 @@ const dateLabelFormatter = new Intl.DateTimeFormat("ko-KR", {
   weekday: "short",
 });
 
+// hourCycle 을 명시해 로케일 기본값(구현에 따라 h23/h24 로 갈릴 수 있다)에 기대지 않는다.
+// h23 은 자정을 "00", 정오를 "12" 로 고정한다.
 const timeFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: KST_TIME_ZONE,
   hour: "2-digit",
   minute: "2-digit",
-  hour12: false,
+  hourCycle: "h23",
 });
 
-const dateTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
+/**
+ * 오전/오후 조립 전용 24시간제 hour/minute 추출기.
+ *
+ * `Intl.DateTimeFormat` 의 `dayPeriod: "short"` 는 ko-KR 에서 오전/오후 대신
+ * "정오"/"저녁"/"밤" 같은 flexible day period 를 낼 수 있고(19:00 → "저녁 7:00",
+ * 12:00 → "정오 12:00", 00:00 → "밤 12:00" — node 실측), 그 결과는 CLDR/ICU
+ * 버전에 따라 갈린다. 대신 이미 신뢰 가능한 KST 24시 hour 를 직접 뽑아
+ * 오전/오후를 수동으로 조립한다.
+ */
+const hourMinuteFormatter = new Intl.DateTimeFormat("ko-KR", {
   timeZone: KST_TIME_ZONE,
-  month: "long",
-  day: "numeric",
-  weekday: "short",
-  hour: "numeric",
+  hour: "2-digit",
   minute: "2-digit",
-  hour12: true,
-  // 명시하지 않으면 ko-KR 인데도 dayPeriod 가 "오후" 대신 "PM" 으로 나온다
-  // (hour12 만으로 자동 삽입되는 dayPeriod 는 스타일이 다르게 결정됨) — node 로 확인.
-  dayPeriod: "short",
+  hourCycle: "h23",
 });
 
 /** KST 기준 `YYYY-MM-DD` 그룹 키를 만든다. `formatToParts` 로 연/월/일을 뽑아 조립한다. */
@@ -101,14 +106,27 @@ export function formatKstTimeRange(startAt: string, endAt?: string): string {
   return `${start} ~ ${end}`;
 }
 
-/** KST 기준 `9월 10일 (수) 오후 2:00` 형태의 날짜·시간 문자열을 만든다. */
+/**
+ * KST 기준 `9월 10일 (수) 오후 2:00` 형태의 날짜·시간 문자열을 만든다.
+ *
+ * 오전/오후는 `dayPeriod` 포맷 옵션이 아니라, `hourMinuteFormatter` 로 뽑은
+ * KST 24시 hour 를 직접 판별해 조립한다(위 주석 참조). 정오(12시)는 "오후 12:00",
+ * 자정(0시)은 "오전 12:00" 이 되도록 `hour % 12 || 12` 로 12시간제 값을 만든다.
+ */
 export function formatKstDateTime(startAt: string): string {
-  const parts = dateTimeFormatter.formatToParts(new Date(startAt));
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
-  const dayPeriod = parts.find((part) => part.type === "dayPeriod")?.value ?? "";
-  const hour = parts.find((part) => part.type === "hour")?.value ?? "";
-  const minute = parts.find((part) => part.type === "minute")?.value ?? "";
-  return `${month} ${day}일 (${weekday}) ${dayPeriod} ${hour}:${minute}`;
+  const date = new Date(startAt);
+
+  const dateParts = dateLabelFormatter.formatToParts(date);
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "";
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "";
+  const weekday = dateParts.find((part) => part.type === "weekday")?.value ?? "";
+
+  const timeParts = hourMinuteFormatter.formatToParts(date);
+  const hour24 = Number(timeParts.find((part) => part.type === "hour")?.value ?? "0");
+  const minute = timeParts.find((part) => part.type === "minute")?.value ?? "00";
+
+  const dayPeriod = hour24 < 12 ? "오전" : "오후";
+  const hour12 = hour24 % 12 || 12;
+
+  return `${month} ${day}일 (${weekday}) ${dayPeriod} ${hour12}:${minute}`;
 }

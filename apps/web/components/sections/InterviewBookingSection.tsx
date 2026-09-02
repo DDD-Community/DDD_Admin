@@ -421,6 +421,7 @@ export const InterviewBookingSection = () => {
   );
 
   const slotGroups = useMemo(() => groupSlotsByKstDate(slots), [slots]);
+  const allSlotsFull = slots.length > 0 && slots.every((slot) => slot.remainingSeats === 0);
   const selectedSlot =
     selectedSlotId !== null ? (slots.find((slot) => slot.id === selectedSlotId) ?? null) : null;
 
@@ -444,7 +445,16 @@ export const InterviewBookingSection = () => {
 
     try {
       const reservation = await createBookingReservation(token, selectedSlotId);
-      setContext((prev) => (prev ? { ...prev, reservation } : prev));
+      // BookingReservation.startAt/endAt/location 은 BE DTO 가 slot 관계에서 채우는
+      // optional 필드다(설계 §4.1) — 비어 있으면 사용자가 방금 고른 selectedSlot 값으로
+      // 채운다. selectedSlot 은 이 클로저가 생성될 때의 값을 그대로 참조한다.
+      const reservationWithFallback = {
+        ...reservation,
+        startAt: reservation.startAt ?? selectedSlot?.startAt,
+        endAt: reservation.endAt ?? selectedSlot?.endAt,
+        location: reservation.location ?? selectedSlot?.location,
+      };
+      setContext((prev) => (prev ? { ...prev, reservation: reservationWithFallback } : prev));
       setStatus("done");
       return;
     } catch (error) {
@@ -463,6 +473,7 @@ export const InterviewBookingSection = () => {
         if (error.code === "INTERVIEW_SLOT_FULL") {
           pendingBannerRef.current = "방금 마감되었어요. 다른 시간을 골라주세요";
           setSelectedSlotId(null);
+          setStatus("booking");
           setReloadCount((count) => count + 1);
           return;
         }
@@ -470,6 +481,7 @@ export const InterviewBookingSection = () => {
         if (error.code === "INTERVIEW_SLOT_CLOSED" || error.code === "INTERVIEW_SLOT_NOT_FOUND") {
           pendingBannerRef.current = error.message;
           setSelectedSlotId(null);
+          setStatus("booking");
           setReloadCount((count) => count + 1);
           return;
         }
@@ -509,7 +521,16 @@ export const InterviewBookingSection = () => {
         <StateCard>
           <StateText>{NOTICE_TEXT[status]}</StateText>
           {status === "failed" ? (
-            <RetryButton type="button" onClick={() => setReloadCount((count) => count + 1)}>
+            <RetryButton
+              type="button"
+              onClick={() => {
+                // failed 에서의 재시도는 SLOT_FULL 류의 "조용한" 재조회와 달리 사용자가
+                // 막힌 화면을 보고 누르는 액션이라, 눌렸다는 피드백이 반드시 보여야 한다.
+                // hasLoadedOnceRef 를 되돌려 재조회 effect 가 다시 loading 화면을 띄우게 한다.
+                hasLoadedOnceRef.current = false;
+                setReloadCount((count) => count + 1);
+              }}
+            >
               다시 시도
             </RetryButton>
           ) : null}
@@ -562,6 +583,11 @@ export const InterviewBookingSection = () => {
           <EmptyState>아직 열린 면접 시간이 없어요. 운영진에게 문의해주세요</EmptyState>
         ) : (
           <DateGroupList>
+            {allSlotsFull ? (
+              <EmptyState>
+                현재 예약 가능한 시간이 모두 마감되었어요. 운영진에게 문의해주세요
+              </EmptyState>
+            ) : null}
             {slotGroups.map((group) => (
               <DateGroup key={group.dateKey}>
                 <DateGroupHeading>{group.dateLabel}</DateGroupHeading>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import styled from "@emotion/styled";
 import { colors, fontSizes, fontWeights, lineHeights } from "@/constants/tokens";
 import type { BookingSlot } from "@/lib/api/interview-booking";
@@ -154,6 +154,77 @@ export const BookingConfirmModal = ({
   onCancel,
   onConfirm,
 }: BookingConfirmModalProps) => {
+  // 포커스 트랩·초기 포커스·포커스 복원 관례는 `PreAlertModal.tsx:644-697` 를 그대로 따른다.
+  // 이 모달은 부모가 마운트 여부로 열림/닫힘을 제어하므로(위 주석), `open` 플래그 없이
+  // 마운트 = 열림으로 취급한다.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  /** 모달 안의 포커스 가능한 요소. 버튼 disabled 상태가 바뀌므로 매번 새로 조회한다. */
+  const getFocusable = useCallback((): HTMLElement[] => {
+    const card = cardRef.current;
+    if (!card) return [];
+    const selector = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    return Array.from(card.querySelectorAll<HTMLElement>(selector)).filter(
+      (element) => element.offsetParent !== null,
+    );
+  }, []);
+
+  // 열리기 직전에 포커스가 있던 요소를 기억해 두었다가, 언마운트 시 그 자리로 되돌린다.
+  useEffect(function restoreFocusOnUnmount() {
+    restoreFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    return () => {
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
+    };
+  }, []);
+
+  // 마운트 시 모달의 첫 포커스 가능 요소로 포커스를 들인다.
+  useEffect(
+    function focusFirstElementOnMount() {
+      const frame = window.requestAnimationFrame(() => {
+        const [first] = getFocusable();
+        first?.focus();
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    },
+    [getFocusable],
+  );
+
+  // Tab / Shift+Tab 을 모달 경계에서 순환시킨다 — aria-modal 만으로는 포커스가 갇히지 않는다.
+  useEffect(
+    function trapFocusWithinModal() {
+      const trapFocus = (event: KeyboardEvent) => {
+        if (event.key !== "Tab") return;
+
+        const focusable = getFocusable();
+        if (focusable.length === 0) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement;
+        const isOutside = !cardRef.current?.contains(active);
+
+        if (event.shiftKey && (isOutside || active === first)) {
+          event.preventDefault();
+          last.focus();
+          return;
+        }
+        if (!event.shiftKey && (isOutside || active === last)) {
+          event.preventDefault();
+          first.focus();
+        }
+      };
+
+      window.addEventListener("keydown", trapFocus);
+      return () => window.removeEventListener("keydown", trapFocus);
+    },
+    [getFocusable],
+  );
+
   useEffect(
     function closeOnEscapeWhileIdle() {
       const escHandler = (event: KeyboardEvent) => {
@@ -188,7 +259,7 @@ export const BookingConfirmModal = ({
 
   return (
     <Overlay onClick={onBackdropClick}>
-      <ModalCard role="dialog" aria-modal="true" aria-label="예약 확인 모달">
+      <ModalCard ref={cardRef} role="dialog" aria-modal="true" aria-label="예약 확인 모달">
         <Title>이 시간으로 예약할까요?</Title>
 
         <DetailList>
@@ -196,12 +267,10 @@ export const BookingConfirmModal = ({
             <DetailLabel>일시</DetailLabel>
             <DetailValue>{formatKstDateTime(slot.startAt)}</DetailValue>
           </DetailRow>
-          {slot.location ? (
-            <DetailRow>
-              <DetailLabel>장소</DetailLabel>
-              <DetailValue>{slot.location}</DetailValue>
-            </DetailRow>
-          ) : null}
+          <DetailRow>
+            <DetailLabel>장소</DetailLabel>
+            <DetailValue>{slot.location || "안내 예정"}</DetailValue>
+          </DetailRow>
         </DetailList>
 
         <WarningText>
