@@ -27,7 +27,7 @@ export const InterviewSlotFormSchema = z
       .number({ message: "수용 인원을 입력해주세요" })
       .int()
       .min(1, "최소 1명 이상이어야 합니다"),
-    location: z.string(),
+    location: z.string().refine((v) => v.trim().length > 0, "장소를 입력해주세요"),
     description: z.string(),
   })
   .refine((v) => v.startTime < v.endTime, {

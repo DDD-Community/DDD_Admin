@@ -296,18 +296,25 @@ export function InterviewSlotRegisterDrawer({
                   />
                 </FormField>
 
-                <FormField label="장소 (선택)">
+                <FormField label="장소">
                   <Controller
                     control={control}
                     name="location"
-                    render={({ field }) => (
-                      <Input
-                        aria-label="장소"
-                        placeholder="강남구청 회의실 / Google Meet"
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        className="w-full"
-                      />
+                    render={({ field, fieldState }) => (
+                      <>
+                        <Input
+                          aria-label="장소"
+                          placeholder="강남구청 회의실 / Google Meet"
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className="w-full"
+                        />
+                        {fieldState.error && (
+                          <p className="mt-1 text-xs text-danger">
+                            {fieldState.error.message}
+                          </p>
+                        )}
+                      </>
                     )}
                   />
                 </FormField>
