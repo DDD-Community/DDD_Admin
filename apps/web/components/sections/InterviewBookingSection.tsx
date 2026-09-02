@@ -334,6 +334,17 @@ export const InterviewBookingSection = () => {
    * 반영해야 하는 배너는 상태가 아니라 ref 로 들고 있다가 effect 안에서 적용한다.
    */
   const pendingBannerRef = useRef<string | null>(null);
+  /**
+   * "최초 로드가 이미 한 번 성공했는지" — 리뷰 Finding 2 대응.
+   *
+   * SLOT_FULL 등으로 확정 실패 후 슬롯만 조용히 재조회할 때(`reloadCount` 증가)까지
+   * 매번 `setStatus("loading")` 해버리면 화면 전체가 스피너로 바뀌어 사용자가 방금
+   * 보던 목록·맥락을 잃는다. 이미 한 번 성공적으로 로드된 뒤의 재조회는 이 플래그로
+   * 감지해 `loading` 화면으로 떨어뜨리지 않고, 최초 진입/토큰 변경 시에만 로딩 화면을 보여준다.
+   */
+  const hasLoadedOnceRef = useRef(false);
+  /** 위 플래그를 "토큰이 바뀐 진짜 최초 로드"에서만 리셋하기 위한 이전 토큰 기록. */
+  const previousTokenRef = useRef<string | null | undefined>(undefined);
 
   // 재조회 함수를 useCallback 으로 밖에 빼지 않고 effect 안에 그대로 둔다 — 밖으로 빼면
   // 클린업 시점의 stale 응답(예: token 이 바뀐 뒤 늦게 도착한 이전 요청)이 최신 상태를
@@ -342,13 +353,22 @@ export const InterviewBookingSection = () => {
     function loadBookingOnTokenOrReload() {
       let ignore = false;
 
+      // 토큰이 바뀌었을 때만 "최초 로드" 취급으로 되돌린다 — reloadCount 만 바뀐
+      // 조용한 재조회에서는 이 플래그를 건드리면 안 된다(그러면 매번 풀스크린 로딩이 된다).
+      if (previousTokenRef.current !== token) {
+        hasLoadedOnceRef.current = false;
+        previousTokenRef.current = token;
+      }
+
       async function loadBooking() {
         if (!token) {
           setStatus("invalid");
           return;
         }
 
-        setStatus("loading");
+        if (!hasLoadedOnceRef.current) {
+          setStatus("loading");
+        }
         setBanner(null);
 
         try {
@@ -358,6 +378,7 @@ export const InterviewBookingSection = () => {
 
           if (nextContext.reservation) {
             setStatus("done");
+            hasLoadedOnceRef.current = true;
             return;
           }
 
@@ -366,12 +387,16 @@ export const InterviewBookingSection = () => {
           setSlots(nextSlots);
           setSelectedSlotId(null);
           setStatus("booking");
+          hasLoadedOnceRef.current = true;
           if (pendingBannerRef.current) {
             setBanner(pendingBannerRef.current);
             pendingBannerRef.current = null;
           }
         } catch (error) {
           if (ignore) return;
+          // Finding 1: 성공 경로에서만 비우면 이 재조회가 실패했을 때 배너가 남아
+          // 다음(무관한) 재조회 성공에 오발화한다 — 실패 경로에서도 반드시 비운다.
+          pendingBannerRef.current = null;
           if (error instanceof BookingApiError) {
             if (error.status === 401) {
               setStatus("expired");
