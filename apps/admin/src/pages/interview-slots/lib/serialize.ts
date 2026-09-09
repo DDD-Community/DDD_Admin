@@ -4,7 +4,8 @@ import type {
   UpdateInterviewSlotRequestDto,
 } from "@ddd/api"
 
-import type { InterviewSlotForm } from "../types"
+import type { InterviewSlotBulkForm, InterviewSlotForm } from "../types"
+import type { SlotCandidate } from "./generateSlotCandidates"
 
 const pad = (n: number): string => `${n}`.padStart(2, "0")
 
@@ -14,7 +15,7 @@ const pad = (n: number): string => `${n}`.padStart(2, "0")
  * `toISOString()` 으로 BE 계약(예: "2026-05-01T14:00:00+09:00")이 요구하는
  * timezone-aware 값으로 변환한다.
  */
-const combineToIsoLocal = (date: string, time: string): string => {
+export const combineToIsoLocal = (date: string, time: string): string => {
   const t = time.length === 5 ? `${time}:00` : time
   return new Date(`${date}T${t}`).toISOString()
 }
@@ -37,7 +38,7 @@ const trimmedOrUndefined = (s: string): string | undefined => {
 }
 
 export const serializeFormToCreatePayload = (
-  form: InterviewSlotForm,
+  form: InterviewSlotForm
 ): CreateInterviewSlotRequestDto => ({
   cohortId: form.cohortId,
   cohortPartId: form.cohortPartId,
@@ -48,12 +49,27 @@ export const serializeFormToCreatePayload = (
   description: trimmedOrUndefined(form.description),
 })
 
+/** 반복 등록 — 선택된 후보마다 공통 필드(기수/파트/정원/장소/설명)를 붙인 생성 페이로드 */
+export const serializeBulkFormToCreatePayloads = (
+  form: InterviewSlotBulkForm,
+  candidates: SlotCandidate[]
+): CreateInterviewSlotRequestDto[] =>
+  candidates.map((candidate) => ({
+    cohortId: form.cohortId,
+    cohortPartId: form.cohortPartId,
+    startAt: combineToIsoLocal(form.date, candidate.startTime),
+    endAt: combineToIsoLocal(form.date, candidate.endTime),
+    capacity: form.capacity,
+    location: trimmedOrUndefined(form.location),
+    description: trimmedOrUndefined(form.description),
+  }))
+
 /**
  * 수정 페이로드 — BE PATCH DTO 가 cohortId/cohortPartId 를 받지 않으므로 제외.
  * 슬롯의 기수/파트는 한 번 만들면 변경 불가 (정책).
  */
 export const serializeFormToUpdatePayload = (
-  form: InterviewSlotForm,
+  form: InterviewSlotForm
 ): UpdateInterviewSlotRequestDto => ({
   startAt: combineToIsoLocal(form.date, form.startTime),
   endAt: combineToIsoLocal(form.date, form.endTime),
@@ -63,7 +79,7 @@ export const serializeFormToUpdatePayload = (
 })
 
 export const serializeSlotToForm = (
-  slot: InterviewSlot,
+  slot: InterviewSlot
 ): Partial<InterviewSlotForm> => ({
   cohortId: slot.cohortId,
   cohortPartId: slot.cohortPartId,

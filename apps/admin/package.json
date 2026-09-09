@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc -b",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ddd/api": "workspace:*",
@@ -50,7 +52,8 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "catalog:",
     "typescript-eslint": "^8.62.1",
-    "vite": "^8.1.3"
+    "vite": "^8.1.3",
+    "vitest": "^5.0.0"
   },
   "msw": {
     "workerDirectory": [

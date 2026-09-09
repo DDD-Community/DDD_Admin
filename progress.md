@@ -158,7 +158,7 @@
 - ✅ Phase B — `StatusChangeModal` 의 `INTERVIEW_SLOTS_NOT_READY` 분기에서 `InterviewSlotsRequiredModal` (HeroUI Modal) 노출 → "슬롯 등록하러 가기" 시 `/interview-slots?cohortId=X&cohortPartId=Y` 로 navigate (필터 prefill)
 - ✅ 예약자 목록 표시 — 슬롯 행 "예약/정원" 셀 클릭 → `ReservationsDrawer` 오픈 (`InterviewSlotResponseDto.reservations` nested 활용). 지원자명은 `applicationQueries.getAdminApplications({ cohortId })` `useSuspenseQuery` 로 `applicationFormId → applicantName` 매핑
 - ✅ 예약 취소 어드민 UI — `CancelReservationDialog` (AlertDialog) + `useCancelReservationFlow` (`cancelInterviewReservation` mutation → toast + `slotLists()` invalidate). Drawer 안 예약 행 [취소] 버튼에서 confirm 후 호출
-- ⬜ 슬롯 일괄 등록 (날짜 + 시간대 그리드) — 후속 PR
+- ✅ 슬롯 반복 등록 — 등록 Drawer 의 "여러 개 생성" 모드. 운영 시간대 + 슬롯 길이(30/60분 프리셋·직접 입력)로 후보를 생성해 체크리스트 미리보기(`BulkSlotCandidateList`) → 단건 POST 병렬 호출(`useCreateSlotsBulkFlow`, BE bulk API 없음). 같은 기수·파트 기존 슬롯과 겹치는 후보는 `useBulkSlotCandidates` 가 잠가 등록 불가. 부분 실패 시 Drawer 유지 + 실패분만 재전송. 순수 로직(`generateSlotCandidates`·`markConflictingCandidates`·직렬화·스키마)은 vitest 단위 테스트. 다중 날짜 그리드는 후속
 - ✅ 지원자 테이블 면접일자 컬럼 — `useApplicationsBoard` 가 `getInterviewSlots` 응답의 `reservations[].applicationFormId → slot.startAt` 로 Map 빌드해 `ApplicationTable` 에 전달 (commit 197834b)
 
 ---

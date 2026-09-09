@@ -75,6 +75,8 @@ pnpm build:web          # 웹 빌드 (추후)
 
 pnpm gen:api            # openapi-typescript 로 BE OpenAPI → packages/api/src/generated/api.ts 갱신
 
+pnpm --filter @ddd/admin test   # 어드민 단위 테스트 (vitest, 순수 로직 대상)
+
 pnpm lint               # 전체 린트
 pnpm lint:fix           # 전체 린트 자동 수정
 pnpm format             # 전체 Prettier 포맷
